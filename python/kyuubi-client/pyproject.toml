@@ -1,0 +1,30 @@
+[project]
+name = "kyuubi-client"
+version = "0.1.0"
+description = "Apache Kyuubi REST API client: DB-API 2.0, a CLI, and the duck-kyuubi launcher"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["requests>=2.28"]
+
+[project.scripts]
+kyuubi = "kyuubi_client.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kyuubi_client"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "live: needs a running Kyuubi (KYUUBI_URL; run with --live)",
+    "quack: needs the duckdb engine and a reachable Quack server",
+    "k8s: needs a launcher that can start pods",
+    "spark: starts a Spark engine (slow)",
+    "auth: needs a server that checks passwords",
+]

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.github.felixmilner.duckkyuubi</groupId>
+    <artifactId>duck-kyuubi</artifactId>
+    <version>0.1.0</version>
+  </parent>
+
+  <artifactId>kyuubi-duckdb</artifactId>
+  <name>kyuubi-duckdb</name>
+  <description>Kyuubi JDBC-engine dialect that runs SQL on a DuckDB Quack server (kyuubi.engine.jdbc.type=duckdb).</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.kyuubi</groupId>
+      <artifactId>kyuubi-jdbc-engine_${scala.binary.version}</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.duckdb</groupId>
+      <artifactId>duckdb_jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+    </dependency>
+  </dependencies>
+</project>

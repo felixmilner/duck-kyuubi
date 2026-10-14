@@ -1,0 +1,84 @@
+{
+  "hello": {
+    "description": "prints a line a second for N seconds, then a JSON summary, and exits with the code you ask for",
+    "image": "cgr.dev/chainguard/python:latest",
+    "command": [
+      "python",
+      "-u",
+      "-c",
+      "import json, sys\na = sys.argv[1:]\nget = lambda k, d: a[a.index(k) + 1] if k in a else d\nname, n, code = get('--name', 'world'), int(get('--seconds', '5')), int(get('--exit', '0'))\nprint('hello, ' + name, flush=True)\nimport time\nfor i in range(n):\n    print('tick', i + 1, 'of', n, flush=True)\n    time.sleep(1)\nprint(json.dumps({'hello': name, 'seconds': n, 'exit': code}), flush=True)\nsys.exit(code)\n"
+    ],
+    "args": [],
+    "secrets": [],
+    "timeout_s": 900,
+    "exit_codes": {
+      "1": "the exit code you asked for",
+      "4": "the exit code you asked for"
+    },
+    "params": {
+      "name": {
+        "type": "string",
+        "default": "world",
+        "arg": "--name"
+      },
+      "seconds": {
+        "type": "int",
+        "default": "5",
+        "min": 1,
+        "max": 600,
+        "arg": "--seconds"
+      },
+      "exit": {
+        "type": "enum",
+        "default": "0",
+        "values": [
+          "0",
+          "1",
+          "4"
+        ],
+        "arg": "--exit"
+      },
+      "memory": {
+        "type": "size",
+        "default": "128Mi",
+        "min": "64Mi",
+        "max": "1Gi",
+        "to": "resources"
+      }
+    }
+  },
+  "duckdb-demo": {
+    "description": "a Python job running DuckDB (examples/jobs/duckdb-job): groups N million generated rows",
+    "image": "duck-kyuubi/duckdb-job:0.1.0",
+    "image_pull_policy": "IfNotPresent",
+    "args": [],
+    "secrets": [],
+    "timeout_s": 1800,
+    "exit_codes": {
+      "2": "bad arguments"
+    },
+    "params": {
+      "millions": {
+        "type": "int",
+        "default": "10",
+        "min": 1,
+        "max": 1000,
+        "arg": "--millions"
+      },
+      "cpu": {
+        "type": "cores",
+        "default": "1",
+        "min": 1,
+        "max": 4,
+        "to": "resources"
+      },
+      "memory": {
+        "type": "size",
+        "default": "1Gi",
+        "min": "512Mi",
+        "max": "4Gi",
+        "to": "resources"
+      }
+    }
+  }
+}

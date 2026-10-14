@@ -1,0 +1,112 @@
+# Kyuubi with the duck-kyuubi plugins, in namespace duck-kyuubi (examples/kubernetes/README.md).
+#   - duckdb sessions (the default): SQL on the Quack server (quack-server.yaml)
+#   - launcher sessions (kyuubi.engine.jdbc.type=launcher): jobs from the kyuubi-jobs catalog, run as pods
+#     in the user's namespace spark-<user> (add-user.sh)
+# Kyuubi runs each user's engines as child JVMs in this pod (the JDBC engine has no Kubernetes deploy mode).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kyuubi
+  namespace: duck-kyuubi
+data:
+  kyuubi-defaults.conf: |
+    kyuubi.frontend.protocols=THRIFT_BINARY,REST
+    # 0.0.0.0 so kubectl port-forward (which connects to the pod's localhost) and the Service reach it
+    kyuubi.frontend.bind.host=0.0.0.0
+    kyuubi.frontend.thrift.binary.bind.port=10009
+    kyuubi.frontend.rest.bind.port=10099
+
+    # DEMO ONLY: with NONE, anyone who reaches these ports can claim any user name, and the launcher
+    # starts jobs in that user's namespace. Use real authentication (JDBC, LDAP, Kerberos...) for
+    # anything shared: docs/session-policy.md
+    kyuubi.authentication=NONE
+
+    # duckdb by default: the JDBC engine with the duckdb dialect, one engine per user
+    kyuubi.engine.type=JDBC
+    kyuubi.engine.share.level=USER
+    kyuubi.engine.jdbc.type=duckdb
+    kyuubi.engine.jdbc.driver.class=org.duckdb.DuckDBDriver
+    kyuubi.engine.jdbc.connection.url=jdbc:duckdb:
+    kyuubi.engine.jdbc.connection.provider=duckdb
+    kyuubi.engine.jdbc.extra.classpath=/opt/kyuubi/externals/duck-kyuubi/*
+
+    # a config allowlist; launcher sessions get the launcher provider and their own engine
+    kyuubi.session.conf.advisor=io.github.felixmilner.duckkyuubi.policy.SessionPolicy
+---
+# The launcher calls the Kubernetes API as this service account. It has no rights here: the Role that
+# add-user.sh puts in each spark-<user> namespace lets it manage pods there and nowhere else.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kyuubi
+  namespace: duck-kyuubi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kyuubi
+  namespace: duck-kyuubi
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate   # the embedded ZooKeeper holds engine registrations; one server at a time
+  selector:
+    matchLabels: {app: kyuubi}
+  template:
+    metadata:
+      labels: {app: kyuubi}
+    spec:
+      serviceAccountName: kyuubi
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: kyuubi
+          image: duck-kyuubi/kyuubi:0.1.0   # docker/kyuubi.Dockerfile
+          imagePullPolicy: IfNotPresent
+          env:
+            # the engines inherit these; DuckDBConnectionProvider turns the token into a DuckDB secret
+            - name: QUACK_TOKEN
+              valueFrom:
+                secretKeyRef: {name: quack-token, key: TOKEN}
+            - name: QUACK_URI
+              value: quack:quack-server.duck-kyuubi.svc.cluster.local:9494
+            - name: LAUNCHER_CATALOG
+              value: /opt/kyuubi/conf/jobs/catalog.json
+            - name: KYUUBI_JAVA_OPTS
+              value: -Xmx1g
+          ports:
+            - {name: thrift, containerPort: 10009}
+            - {name: rest, containerPort: 10099}
+          readinessProbe:
+            tcpSocket: {port: rest}
+            periodSeconds: 5
+          resources:
+            # the server plus one engine JVM per user and session kind (1 GiB duckdb, 384 MiB launcher)
+            requests: {cpu: 500m, memory: 2Gi}
+            limits: {memory: 4Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - name: conf
+              mountPath: /opt/kyuubi/conf/kyuubi-defaults.conf
+              subPath: kyuubi-defaults.conf
+            - name: jobs   # the launcher re-reads it on every statement, so edits apply within a minute
+              mountPath: /opt/kyuubi/conf/jobs
+              readOnly: true
+      volumes:
+        - name: conf
+          configMap: {name: kyuubi}
+        - name: jobs
+          configMap: {name: kyuubi-jobs}   # kubectl create configmap kyuubi-jobs --from-file=examples/jobs/catalog.json
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kyuubi
+  namespace: duck-kyuubi
+spec:
+  selector: {app: kyuubi}
+  ports:
+    - {name: thrift, port: 10009}
+    - {name: rest, port: 10099}

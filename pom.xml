@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.github.felixmilner.duckkyuubi</groupId>
+  <artifactId>duck-kyuubi</artifactId>
+  <version>0.1.0</version>
+  <packaging>pom</packaging>
+  <name>duck-kyuubi</name>
+  <description>Apache Kyuubi JDBC-engine plugins: DuckDB over Quack, and a job launcher.</description>
+
+  <modules>
+    <module>kyuubi-duckdb</module>
+    <module>kyuubi-launcher</module>
+    <module>kyuubi-session-policy</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- Kyuubi's server and JDBC engine run on Java 17+ -->
+    <maven.compiler.release>17</maven.compiler.release>
+    <!-- Compile against the Kyuubi you run: the dialect API is internal and changes between releases.
+         Kyuubi's binary release ships the Scala 2.12 build of the JDBC engine. -->
+    <kyuubi.version>1.12.0</kyuubi.version>
+    <scala.binary.version>2.12</scala.binary.version>
+    <!-- What Kyuubi 1.12.0's JDBC engine puts on its classpath (externals/engines/jdbc/) -->
+    <jackson.version>2.20.1</jackson.version>
+    <slf4j.version>1.7.36</slf4j.version>
+    <!-- Tests only: the stable DuckDB on Maven Central. Quack itself needs a DuckDB 2.0 build. -->
+    <duckdb.version>1.5.6.0</duckdb.version>
+    <junit.version>5.11.4</junit.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.kyuubi</groupId>
+        <artifactId>kyuubi-jdbc-engine_${scala.binary.version}</artifactId>
+        <version>${kyuubi.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.kyuubi</groupId>
+        <artifactId>kyuubi-server-plugin</artifactId>
+        <version>${kyuubi.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.duckdb</groupId>
+        <artifactId>duckdb_jdbc</artifactId>
+        <version>${duckdb.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.4.2</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

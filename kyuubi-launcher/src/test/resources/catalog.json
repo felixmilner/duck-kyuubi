@@ -1,0 +1,20 @@
+{
+  "hello": {
+    "description": "test job",
+    "image": "python:3.12-slim",
+    "command": ["python", "-u", "-c", "print('hi')"],
+    "args": ["--greeting", "hello"],
+    "secrets": ["hello-secret"],
+    "timeout_s": 600,
+    "exit_codes": {"3": "asked to fail"},
+    "params": {
+      "name": {"type": "string", "arg": "--name"},
+      "seconds": {"type": "int", "default": "5", "min": 1, "max": 600, "arg": "--seconds"},
+      "cpu": {"type": "cores", "default": "1", "min": 0.5, "max": 2, "to": "resources"},
+      "memory": {"type": "size", "default": "512Mi", "min": "256Mi", "max": "2Gi", "to": "resources"},
+      "level": {"type": "enum", "default": "info", "values": ["info", "debug"], "to": "env", "env": "LOG_LEVEL"},
+      "node": {"type": "enum", "default": "any", "values": ["any", "node-a"], "to": "node", "map": {"any": ""}},
+      "timeout": {"type": "int", "min": 10, "max": 600, "to": "timeout"}
+    }
+  }
+}

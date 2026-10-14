@@ -1,0 +1,53 @@
+# A shared DuckDB Quack server for the duckdb engine. Its SQL is quack-server/server.sql (ConfigMap
+# quack-server, created from the file; README.md), and its client token the quack-token Secret.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quack-server
+  namespace: duck-kyuubi
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: quack-server}
+  template:
+    metadata:
+      labels: {app: quack-server}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: quack-server
+          image: duck-kyuubi/quack-server:0.1.0   # quack-server/Dockerfile
+          imagePullPolicy: IfNotPresent
+          args: ["/sql/server.sql"]
+          env:
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef: {name: quack-token, key: TOKEN}
+          ports:
+            - containerPort: 9494
+          readinessProbe:
+            tcpSocket: {port: 9494}
+            periodSeconds: 5
+          resources:
+            # every user's queries run here: give DuckDB a memory_limit below the pod's limit in server.sql
+            requests: {cpu: 500m, memory: 1Gi}
+            limits: {memory: 4Gi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          volumeMounts:
+            - {name: sql, mountPath: /sql}
+      volumes:
+        - name: sql
+          configMap: {name: quack-server}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quack-server
+  namespace: duck-kyuubi
+spec:
+  selector: {app: quack-server}
+  ports:
+    - port: 9494
