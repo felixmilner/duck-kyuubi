@@ -22,13 +22,19 @@ No Kyuubi fork: Kyuubi's engine types are a fixed list, but its JDBC engine load
 providers with Java's ServiceLoader from `kyuubi.engine.jdbc.extra.classpath`, so both shims are jars you
 add to a stock Kyuubi.
 
+```mermaid
+flowchart LR
+  clients["beeline, JDBC, REST:<br/>kyuubi CLI, Python, Airflow"] -- "Thrift, REST" --> server["Kyuubi server<br/>+ session policy"]
+  server --> duck["duckdb engine"]
+  server --> launch["launcher engine"]
+  duck -- "Quack" --> quack["Quack server<br/>(DuckDB)"]
+  quack --> data[("tables,<br/>Iceberg catalog")]
+  launch -- "Kubernetes API" --> pods["job pods in<br/>spark-&lt;user&gt;"]
+  pods -.-> data
 ```
- beeline / JDBC / REST / kyuubi CLI / Airflow
-        │ Thrift :10009, REST :10099
- Kyuubi server ── session policy: allowlist, namespace spark-<user>, routing
-   ├─ JDBC engine, dialect duckdb ─── Quack ───────────▶ Quack server (DuckDB): tables, Iceberg catalog
-   └─ JDBC engine, dialect launcher ─ Kubernetes API ──▶ job pods in spark-<user>
-```
+
+More diagrams (the Kubernetes layout, engine routing, a query and a job step by step) and every
+configuration touch point: [docs/architecture.md](docs/architecture.md).
 
 ## Compatibility
 
@@ -40,10 +46,9 @@ add to a stock Kyuubi.
 | Kubernetes | the launcher, and Kyuubi running in the cluster |
 
 These plugins come from a deployment on a small k3s cluster, where both ran end to end with Kyuubi 1.12.0
-and DuckDB 2.0.0-alpha43385. In this repository, the unit tests cover the plugins and clients, and a local
-Kyuubi 1.12.0 has run them (session policy, launcher catalog and refusals, duckdb up to the Quack
-connection). The Dockerfiles and Kubernetes manifests are adapted from that deployment and haven't been
-run in this form.
+and DuckDB 2.0.0-alpha43385. Here, CI runs the unit tests, a local Kyuubi 1.12.0 with the plugins, and the
+whole stack on kind: the Docker images, the manifests, SQL through the Quack server, and launcher jobs as
+real pods ([Tests](#tests)).
 
 ## Build
 
@@ -115,9 +120,12 @@ in the user's namespace, as non-root pods without a service-account token. More 
 ## Tests
 
 ```bash
-mvn verify                                          # plugin unit tests (DuckDB 1.5.6 from Maven Central)
-pytest python/kyuubi-client python/airflow-kyuubi   # client unit tests; Airflow's need apache-airflow
+mvn verify                                          # the plugins, the launcher against a fake Kubernetes API
+pytest python/kyuubi-client python/airflow-kyuubi   # the clients (Airflow's tests need apache-airflow)
+examples/local/smoke-test.sh                        # a local Kyuubi 1.12.0 with the plugins, and the live tests
+                                                    # that need no Quack server or Kubernetes
+examples/kubernetes/e2e.sh                          # everything on kind: images, manifests, Quack, job pods
 ```
 
-`pytest python/kyuubi-client --live` also runs against a gateway at `$KYUUBI_URL`
-([tests/conftest.py](python/kyuubi-client/tests/conftest.py)).
+CI runs all four. `pytest python/kyuubi-client --live` runs the live tests against any gateway at
+`$KYUUBI_URL` ([tests/conftest.py](python/kyuubi-client/tests/conftest.py)).

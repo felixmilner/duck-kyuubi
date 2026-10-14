@@ -13,7 +13,7 @@ fetch() {   # fetch URL FILE: download once
   [[ -s $2 ]] && return
   mkdir -p "$(dirname "$2")"
   echo "downloading $1" >&2
-  curl -fSL --retry 3 -o "$2.part" "$1" && mv "$2.part" "$2"
+  curl -fsSL --retry 3 -o "$2.part" "$1" && mv "$2.part" "$2"
 }
 
 duckdb_jar() {

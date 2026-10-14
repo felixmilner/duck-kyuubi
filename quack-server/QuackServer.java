@@ -14,7 +14,8 @@ import java.util.regex.Pattern;
  * QuackServer.java server.sql
  *
  * <p>Embedded DuckDB has no getenv(), so getenv('NAME') in the SQL file is replaced with the value
- * of the environment variable as a string literal. Those values are redacted from any error message.
+ * of the environment variable as a string literal, wherever it appears (in comments too: a variable
+ * that isn't set stops the server). Those values are redacted from any error message.
  */
 public class QuackServer {
   private static final Pattern GETENV = Pattern.compile("getenv\\('([A-Za-z_][A-Za-z0-9_]*)'\\)");

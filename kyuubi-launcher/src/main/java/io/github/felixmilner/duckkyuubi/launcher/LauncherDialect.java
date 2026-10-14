@@ -73,6 +73,17 @@ public class LauncherDialect extends JdbcDialect {
   // Created on first use: Kyuubi instantiates every registered dialect to find the one a session
   // asks for, so a duckdb session outside Kubernetes must not need the service-account files.
   private Kube kube;
+  private final long pollMillis;
+
+  public LauncherDialect() {
+    this(null, 3000);
+  }
+
+  /** Tests: a given API client, and how often a waiting RUN polls its pod. */
+  LauncherDialect(Kube kube, long pollMillis) {
+    this.kube = kube;
+    this.pollMillis = pollMillis;
+  }
 
   private synchronized Kube kube() {
     if (kube == null) {
@@ -369,7 +380,7 @@ public class LauncherDialect extends JdbcDialect {
         throw new SQLException("launcher: run " + run + " can't start: " + waiting);
       }
       try {
-        Thread.sleep(3000);
+        Thread.sleep(pollMillis);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         deletePod(user, run);

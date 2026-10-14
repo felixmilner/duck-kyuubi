@@ -32,12 +32,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
     && mkdir -p $KYUUBI_HOME/externals/duck-kyuubi \
     && curl -fsSL -o $KYUUBI_HOME/externals/duck-kyuubi/duckdb_jdbc.jar \
        https://duckdb-staging.duckdb.org/duckdb/duckdb-java/maven/org/duckdb/duckdb_jdbc/${DUCKDB_JDBC_VERSION}/duckdb_jdbc-${DUCKDB_JDBC_VERSION}.jar
-# The quack extension, so the engine never downloads it: the JDBC engine inherits HOME, and DuckDB's
-# INSTALL looks in $HOME/.duckdb/extensions/<version>/<platform>/
+# The extensions the engine's DuckDB uses, so it never downloads them: quack, and httpfs for DuckDB's secure
+# crypto module. The JDBC engine inherits HOME, and DuckDB looks in $HOME/.duckdb/extensions/<version>/<platform>/
 ENV HOME=/opt/kyuubi/home
 RUN platform=linux_${TARGETARCH:-amd64} && dir=$HOME/.duckdb/extensions/$DUCKDB_VERSION/$platform \
     && mkdir -p $dir \
-    && curl -fsSL http://extensions.duckdb.org/$DUCKDB_VERSION/$platform/quack.duckdb_extension.gz | gunzip > $dir/quack.duckdb_extension
+    && for e in quack httpfs; do \
+         curl -fsSL http://extensions.duckdb.org/$DUCKDB_VERSION/$platform/$e.duckdb_extension.gz \
+           | gunzip > $dir/$e.duckdb_extension || exit 1; \
+       done
 COPY --from=plugins /src/kyuubi-duckdb/target/kyuubi-duckdb-*.jar /src/kyuubi-launcher/target/kyuubi-launcher-*.jar \
      /opt/kyuubi/externals/duck-kyuubi/
 COPY --from=plugins /src/kyuubi-session-policy/target/kyuubi-session-policy-*.jar /opt/kyuubi/jars/

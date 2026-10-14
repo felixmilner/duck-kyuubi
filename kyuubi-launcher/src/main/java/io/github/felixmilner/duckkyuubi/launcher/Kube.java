@@ -23,17 +23,38 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * The few Kubernetes API calls the launcher needs, over HTTPS with the pod's service-account token
- * (the kyuubi service account; the "spark" Role in spark-<user> lets it manage pods there). No client
+ * (Kyuubi's service account; the Role in each spark-<user> lets it manage pods there). No client
  * library: the JDBC engine's classpath has Jackson, which is enough.
  */
-final class Kube {
+class Kube {
   private static final String API = "https://kubernetes.default.svc";
   private static final Path SA = Path.of("/var/run/secrets/kubernetes.io/serviceaccount");
   static final ObjectMapper JSON = new ObjectMapper();
 
-  private final HttpClient http;
+  /** Where each call's bearer token comes from. */
+  interface Token {
+    String get() throws IOException;
+  }
 
+  private final String api;
+  private final HttpClient http;
+  private final Token token;
+
+  /** In the cluster: the API server, its CA and the pod's service-account token. */
   Kube() {
+    this(API, inClusterClient(),
+        // read each time: projected service-account tokens are rotated
+        () -> Files.readString(SA.resolve("token")).strip());
+  }
+
+  /** Any API server, e.g. a fake one in tests. */
+  Kube(String api, HttpClient http, Token token) {
+    this.api = api;
+    this.http = http;
+    this.token = token;
+  }
+
+  private static HttpClient inClusterClient() {
     try {
       KeyStore trust = KeyStore.getInstance(KeyStore.getDefaultType());
       trust.load(null, null);
@@ -47,7 +68,7 @@ final class Kube {
       tmf.init(trust);
       SSLContext ssl = SSLContext.getInstance("TLS");
       ssl.init(null, tmf.getTrustManagers(), null);
-      http = HttpClient.newBuilder().sslContext(ssl).connectTimeout(Duration.ofSeconds(10)).build();
+      return HttpClient.newBuilder().sslContext(ssl).connectTimeout(Duration.ofSeconds(10)).build();
     } catch (Exception e) {
       throw new IllegalStateException("launcher: can't set up the Kubernetes API client", e);
     }
@@ -67,11 +88,9 @@ final class Kube {
   }
 
   private String call(String method, String path, String body, String type) throws IOException {
-    // read each time: projected service-account tokens are rotated
-    String token = Files.readString(SA.resolve("token")).strip();
-    HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(API + path))
+    HttpRequest.Builder req = HttpRequest.newBuilder(URI.create(api + path))
         .timeout(Duration.ofSeconds(30))
-        .header("Authorization", "Bearer " + token)
+        .header("Authorization", "Bearer " + token.get())
         .method(method, body == null ? HttpRequest.BodyPublishers.noBody()
             : HttpRequest.BodyPublishers.ofString(body));
     if (type != null) {
