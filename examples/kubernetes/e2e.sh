@@ -30,10 +30,12 @@ examples/kubernetes/add-user.sh alice
 kubectl -n $ns port-forward svc/kyuubi 10099:10099 >/dev/null 2>&1 &
 forward=$!
 trap 'kill $forward 2>/dev/null || true' EXIT
+# -f: wait for a 2xx; the REST API answers 500 for a moment while Kyuubi's metrics start
 for _ in $(seq 60); do
-  curl -s -o /dev/null http://localhost:10099/api/v1/ping && break
+  curl -sf -o /dev/null http://localhost:10099/api/v1/ping && break
   sleep 1
 done
+curl -sf -o /dev/null http://localhost:10099/api/v1/ping || { echo "Kyuubi's REST API isn't answering" >&2; exit 1; }
 
 export KYUUBI_URL=http://localhost:10099 KYUUBI_USER=alice KYUUBI_PASSWORD=
 # everything but Spark (not deployed) and login checks (authentication is off in this example)

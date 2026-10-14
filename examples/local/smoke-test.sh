@@ -14,8 +14,9 @@ log=$WORK/kyuubi-smoke.log
 DUCKDB_JDBC_JAR=$jar "$ROOT/examples/local/run-kyuubi.sh" > "$log" 2>&1 &
 # the server and the engines it started, which outlive it
 trap 'pkill -f "$KYUUBI_HOME/" || true' EXIT
+# -f: wait for a 2xx; the REST API answers 500 for a moment while Kyuubi's metrics start
 for _ in $(seq 120); do
-  curl -s -o /dev/null "http://localhost:10099/api/v1/ping" && break
+  curl -sf -o /dev/null "http://localhost:10099/api/v1/ping" && break
   sleep 1
 done
 curl -sf -o /dev/null "http://localhost:10099/api/v1/ping" || { echo "Kyuubi didn't start:" >&2; tail -50 "$log" >&2; exit 1; }
