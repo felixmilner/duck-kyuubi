@@ -1,7 +1,7 @@
 # Both shims on Kubernetes
 
 Kyuubi with the duckdb and launcher dialects, a Quack server, and a user namespace for jobs, on any
-cluster. The commands use [kind](https://kind.sigs.k8s.io/) and images built locally; on another cluster,
+cluster. [e2e.sh](e2e.sh) does all of this on kind and then runs the client's live tests; CI runs it. The commands use [kind](https://kind.sigs.k8s.io/) and images built locally; on another cluster,
 push the images to a registry and change the `image:` lines (and the catalog's `duckdb-demo` image).
 
 These manifests are adapted from a deployment that ran on k3s with Kyuubi 1.12.0 and DuckDB

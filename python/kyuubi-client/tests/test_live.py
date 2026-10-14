@@ -81,6 +81,15 @@ def test_session_state(conn):
 
 
 @pytest.mark.quack
+def test_reads_the_servers_tables(kyuubi_url, user, password, verify):
+    """`demo` lives on the Quack server (quack-server/server.sql), not in the engine."""
+    with connect(kyuubi_url, user=user, password=password, engine="duckdb", verify=verify) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT count(*), count(*) FILTER (WHERE fizz) FROM demo")
+        assert cur.fetchone() == (1000, 334)
+
+
+@pytest.mark.quack
 def test_timeout_cancels(kyuubi_url, user, password, verify):
     with KyuubiClient(kyuubi_url, user=user, password=password, verify=verify) as client, client.open_session("duckdb") as session:
         session.execute("SELECT 1")  # engine and ATTACH up first

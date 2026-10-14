@@ -115,9 +115,12 @@ in the user's namespace, as non-root pods without a service-account token. More 
 ## Tests
 
 ```bash
-mvn verify                                          # plugin unit tests (DuckDB 1.5.6 from Maven Central)
-pytest python/kyuubi-client python/airflow-kyuubi   # client unit tests; Airflow's need apache-airflow
+mvn verify                                          # the plugins, the launcher against a fake Kubernetes API
+pytest python/kyuubi-client python/airflow-kyuubi   # the clients (Airflow's tests need apache-airflow)
+examples/local/smoke-test.sh                        # a local Kyuubi 1.12.0 with the plugins, and the live tests
+                                                    # that need no Quack server or Kubernetes
+examples/kubernetes/e2e.sh                          # everything on kind: images, manifests, Quack, job pods
 ```
 
-`pytest python/kyuubi-client --live` also runs against a gateway at `$KYUUBI_URL`
-([tests/conftest.py](python/kyuubi-client/tests/conftest.py)).
+CI runs all four. `pytest python/kyuubi-client --live` runs the live tests against any gateway at
+`$KYUUBI_URL` ([tests/conftest.py](python/kyuubi-client/tests/conftest.py)).
