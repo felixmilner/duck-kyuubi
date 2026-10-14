@@ -1,5 +1,5 @@
 -- DuckDB Quack server for Kyuubi's duckdb engine (kyuubi-duckdb). QuackServer.java runs this file,
--- replacing getenv('NAME') with that environment variable's value first: embedded DuckDB has no getenv().
+-- replacing each getenv call with its environment variable's value first: embedded DuckDB has none.
 INSTALL quack;   -- a no-op when the image already has it (quack-server/Dockerfile)
 LOAD quack;
 
