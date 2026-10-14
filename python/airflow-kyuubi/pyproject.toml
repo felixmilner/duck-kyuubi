@@ -3,6 +3,7 @@ name = "airflow-kyuubi"
 version = "0.1.0"
 description = "Airflow operator that runs jobs through the duck-kyuubi launcher on Apache Kyuubi"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.10"
 # Airflow itself comes from the environment that runs the DAGs (2.x or 3.x); only the client is ours.
 dependencies = ["kyuubi-client"]

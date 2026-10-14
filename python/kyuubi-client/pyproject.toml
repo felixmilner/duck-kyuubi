@@ -3,6 +3,7 @@ name = "kyuubi-client"
 version = "0.1.0"
 description = "Apache Kyuubi REST API client: DB-API 2.0, a CLI, and the duck-kyuubi launcher"
 readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = ["requests>=2.28"]
 

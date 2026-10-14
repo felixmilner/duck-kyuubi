@@ -129,3 +129,7 @@ examples/kubernetes/e2e.sh                          # everything on kind: images
 
 CI runs all four. `pytest python/kyuubi-client --live` runs the live tests against any gateway at
 `$KYUUBI_URL` ([tests/conftest.py](python/kyuubi-client/tests/conftest.py)).
+
+## License
+
+[Apache License 2.0](LICENSE).

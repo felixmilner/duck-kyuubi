@@ -10,6 +10,14 @@
   <packaging>pom</packaging>
   <name>duck-kyuubi</name>
   <description>Apache Kyuubi JDBC-engine plugins: DuckDB over Quack, and a job launcher.</description>
+  <url>https://github.com/felixmilner/duck-kyuubi</url>
+
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
 
   <modules>
     <module>kyuubi-duckdb</module>
