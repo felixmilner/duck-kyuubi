@@ -22,13 +22,19 @@ No Kyuubi fork: Kyuubi's engine types are a fixed list, but its JDBC engine load
 providers with Java's ServiceLoader from `kyuubi.engine.jdbc.extra.classpath`, so both shims are jars you
 add to a stock Kyuubi.
 
+```mermaid
+flowchart LR
+  clients["beeline, JDBC, REST:<br/>kyuubi CLI, Python, Airflow"] -- "Thrift, REST" --> server["Kyuubi server<br/>+ session policy"]
+  server --> duck["duckdb engine"]
+  server --> launch["launcher engine"]
+  duck -- "Quack" --> quack["Quack server<br/>(DuckDB)"]
+  quack --> data[("tables,<br/>Iceberg catalog")]
+  launch -- "Kubernetes API" --> pods["job pods in<br/>spark-&lt;user&gt;"]
+  pods -.-> data
 ```
- beeline / JDBC / REST / kyuubi CLI / Airflow
-        │ Thrift :10009, REST :10099
- Kyuubi server ── session policy: allowlist, namespace spark-<user>, routing
-   ├─ JDBC engine, dialect duckdb ─── Quack ───────────▶ Quack server (DuckDB): tables, Iceberg catalog
-   └─ JDBC engine, dialect launcher ─ Kubernetes API ──▶ job pods in spark-<user>
-```
+
+More diagrams (the Kubernetes layout, engine routing, a query and a job step by step) and every
+configuration touch point: [docs/architecture.md](docs/architecture.md).
 
 ## Compatibility
 
