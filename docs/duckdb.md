@@ -66,7 +66,8 @@ so it replaces `getenv('NAME')` in the file with that environment variable's val
 values from any error. It does that everywhere in the file, comments included, and stops if a variable isn't
 set. [quack-server/server.sql](../quack-server/server.sql) is the demo:
 
-- `LOAD quack`, then your data (a `demo` table).
+- `LOAD quack` and `LOAD httpfs` (Quack's server needs the secure crypto module httpfs brings), then your
+  data (a `demo` table).
 - `SET disabled_filesystems = 'LocalFileSystem'` and `SET lock_configuration = true`. Clients' SQL runs in
   this process: without these, any Kyuubi user could read local files, `/proc/self/environ` with the
   server's credentials included, or change its settings. S3 and HTTP stay available.
