@@ -46,10 +46,9 @@ configuration touch point: [docs/architecture.md](docs/architecture.md).
 | Kubernetes | the launcher, and Kyuubi running in the cluster |
 
 These plugins come from a deployment on a small k3s cluster, where both ran end to end with Kyuubi 1.12.0
-and DuckDB 2.0.0-alpha43385. In this repository, the unit tests cover the plugins and clients, and a local
-Kyuubi 1.12.0 has run them (session policy, launcher catalog and refusals, duckdb up to the Quack
-connection). The Dockerfiles and Kubernetes manifests are adapted from that deployment and haven't been
-run in this form.
+and DuckDB 2.0.0-alpha43385. Here, CI runs the unit tests, a local Kyuubi 1.12.0 with the plugins, and the
+whole stack on kind: the Docker images, the manifests, SQL through the Quack server, and launcher jobs as
+real pods ([Tests](#tests)).
 
 ## Build
 

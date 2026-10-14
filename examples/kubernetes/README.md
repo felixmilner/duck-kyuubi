@@ -1,12 +1,12 @@
 # Both shims on Kubernetes
 
 Kyuubi with the duckdb and launcher dialects, a Quack server, and a user namespace for jobs, on any
-cluster. [e2e.sh](e2e.sh) does all of this on kind and then runs the client's live tests; CI runs it. The commands use [kind](https://kind.sigs.k8s.io/) and images built locally; on another cluster,
+cluster. The commands use [kind](https://kind.sigs.k8s.io/) and images built locally; on another cluster,
 push the images to a registry and change the `image:` lines (and the catalog's `duckdb-demo` image).
 
-These manifests are adapted from a deployment that ran on k3s with Kyuubi 1.12.0 and DuckDB
-2.0.0-alpha43385; they haven't been run in exactly this form. Authentication is off
-(`kyuubi.authentication=NONE`), which is fine on a laptop only: [docs/session-policy.md](../../docs/session-policy.md).
+[e2e.sh](e2e.sh) does all of this on kind, then runs the client's live tests and the Python examples
+against it; CI runs it on every push. Authentication is off (`kyuubi.authentication=NONE`), which is fine
+on a laptop only: [docs/session-policy.md](../../docs/session-policy.md).
 
 ## 1. Cluster and images
 
